@@ -276,3 +276,160 @@ export const getMyTuitions = async (req, res) => {
     });
   }
 };
+
+// Update a tuition created by the logged-in tutor
+export const updateMyTuition = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid tuition ID.",
+      });
+    }
+
+    const allowedFields = [
+      "title",
+      "subject",
+      "classLevel",
+      "mode",
+      "location",
+      "monthlyFee",
+      "daysPerWeek",
+      "bannerImage",
+      "description",
+    ];
+
+    const updateData = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid fields provided for update.",
+      });
+    }
+
+    if (
+      updateData.title !== undefined &&
+      (typeof updateData.title !== "string" || !updateData.title.trim())
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Title cannot be empty.",
+      });
+    }
+
+    if (
+      updateData.subject !== undefined &&
+      (typeof updateData.subject !== "string" || !updateData.subject.trim())
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject cannot be empty.",
+      });
+    }
+
+    if (
+      updateData.classLevel !== undefined &&
+      (typeof updateData.classLevel !== "string" ||
+        !updateData.classLevel.trim())
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Class level cannot be empty.",
+      });
+    }
+
+    if (
+      updateData.mode !== undefined &&
+      !["Online", "Offline"].includes(updateData.mode)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Mode must be Online or Offline.",
+      });
+    }
+
+    if (updateData.monthlyFee !== undefined) {
+      const fee = Number(updateData.monthlyFee);
+
+      if (!Number.isFinite(fee) || fee <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Monthly fee must be a positive number.",
+        });
+      }
+
+      updateData.monthlyFee = fee;
+    }
+
+    if (updateData.daysPerWeek !== undefined) {
+      const days = Number(updateData.daysPerWeek);
+
+      if (!Number.isInteger(days) || days < 1 || days > 7) {
+        return res.status(400).json({
+          success: false,
+          message: "Days per week must be between 1 and 7.",
+        });
+      }
+
+      updateData.daysPerWeek = days;
+    }
+
+    for (const field of [
+      "title",
+      "subject",
+      "classLevel",
+      "location",
+      "bannerImage",
+      "description",
+    ]) {
+      if (typeof updateData[field] === "string") {
+        updateData[field] = updateData[field].trim();
+      }
+    }
+
+    const { tuitions } = getCollections();
+
+    const result = await tuitions.updateOne(
+      {
+        _id: new ObjectId(id),
+        tutorEmail: req.user.email,
+      },
+      {
+        $set: updateData,
+      },
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Tuition not found or you do not own this tuition.",
+      });
+    }
+
+    const updatedTuition = await tuitions.findOne({
+      _id: new ObjectId(id),
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Tuition updated successfully.",
+      data: updatedTuition,
+    });
+  } catch (error) {
+    console.error("Update tuition error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update tuition.",
+    });
+  }
+};
