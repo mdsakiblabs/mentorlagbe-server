@@ -131,3 +131,30 @@ export const getMyApplications = async (req, res) => {
     });
   }
 };
+
+// Get all applications received by the logged-in tutor
+export const getTutorApplications = async (req, res) => {
+  try {
+    const { applications } = getCollections();
+
+    const tutorApplications = await applications
+      .find({
+        tutorEmail: req.user.email,
+      })
+      .sort({ appliedAt: -1 })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      total: tutorApplications.length,
+      data: tutorApplications,
+    });
+  } catch (error) {
+    console.error("Get tutor applications error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch tutor applications.",
+    });
+  }
+};
