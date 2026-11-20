@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { toNodeHandler } from "better-auth/node";
-
+import imageUploadRoutes from "./routes/imageUpload.routes.js";
 import { connectDB } from "./config/db.js";
 import { createAuth } from "./config/auth.js";
 
@@ -30,6 +30,8 @@ const startServer = async () => {
 
     // Better Auth handler (Express 5)
     app.all("/api/auth/{*any}", toNodeHandler(auth));
+
+    app.use("/api/upload-image", imageUploadRoutes);
 
     // Body parser for API routes
     app.use(express.json());
