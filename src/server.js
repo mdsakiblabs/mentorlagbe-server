@@ -2,9 +2,13 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { toNodeHandler } from "better-auth/node";
+
 import { connectDB } from "./config/db.js";
 import { createAuth } from "./config/auth.js";
+
 import tuitionRoutes from "./routes/tuition.routes.js";
+import applicationRoutes from "./routes/application.routes.js";
+
 dotenv.config();
 
 const app = express();
@@ -27,11 +31,14 @@ const startServer = async () => {
     // Better Auth handler (Express 5)
     app.all("/api/auth/{*any}", toNodeHandler(auth));
 
-    // Body parser for other API routes
+    // Body parser for API routes
     app.use(express.json());
 
     // Tuition routes
     app.use("/api/tuitions", tuitionRoutes);
+
+    // Application routes
+    app.use("/api/applications", applicationRoutes);
 
     const PORT = process.env.PORT || 5000;
 
