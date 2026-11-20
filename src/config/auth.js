@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
+import { jwt } from "better-auth/plugins";
 import { getDB, client } from "./db.js";
 
 export const createAuth = () => {
@@ -61,5 +62,17 @@ export const createAuth = () => {
         },
       },
     },
+
+    plugins: [
+      jwt({
+        jwt: {
+          definePayload: ({ user }) => ({
+            id: user.id,
+            email: user.email,
+            role: user.role,
+          }),
+        },
+      }),
+    ],
   });
 };
