@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import { toNodeHandler } from "better-auth/node";
 import { connectDB } from "./config/db.js";
 import { createAuth } from "./config/auth.js";
-
+import tuitionRoutes from "./routes/tuition.routes.js";
 dotenv.config();
 
 const app = express();
@@ -29,6 +29,9 @@ const startServer = async () => {
 
     // Body parser for other API routes
     app.use(express.json());
+
+    // Tuition routes
+    app.use("/api/tuitions", tuitionRoutes);
 
     const PORT = process.env.PORT || 5000;
 
