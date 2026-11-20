@@ -104,3 +104,30 @@ export const createApplication = async (req, res) => {
     });
   }
 };
+
+// Get all applications submitted by the logged-in student
+export const getMyApplications = async (req, res) => {
+  try {
+    const { applications } = getCollections();
+
+    const myApplications = await applications
+      .find({
+        studentEmail: req.user.email,
+      })
+      .sort({ appliedAt: -1 })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      total: myApplications.length,
+      data: myApplications,
+    });
+  } catch (error) {
+    console.error("Get my applications error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch your applications.",
+    });
+  }
+};
