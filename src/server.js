@@ -1,15 +1,16 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { toNodeHandler } from "better-auth/node";
 import { connectDB } from "./config/db.js";
+import { createAuth } from "./config/auth.js";
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
+// CORS middleware
 app.use(cors());
-app.use(express.json());
 
 // Test route
 app.get("/", (req, res) => {
@@ -18,13 +19,26 @@ app.get("/", (req, res) => {
 
 // Start server after database connection
 const startServer = async () => {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const PORT = process.env.PORT || 5000;
+    const auth = createAuth();
 
-  app.listen(PORT, () => {
-    console.log(`MentorLagbe server running on port ${PORT}`);
-  });
+    // Better Auth handler (Express 5)
+    app.all("/api/auth/{*any}", toNodeHandler(auth));
+
+    // Body parser for other API routes
+    app.use(express.json());
+
+    const PORT = process.env.PORT || 5000;
+
+    app.listen(PORT, () => {
+      console.log(`MentorLagbe server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Server startup failed:", error);
+    process.exit(1);
+  }
 };
 
 startServer();
