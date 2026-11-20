@@ -249,3 +249,30 @@ export const createTuition = async (req, res) => {
     });
   }
 };
+
+// Get all tuitions created by the logged-in tutor
+export const getMyTuitions = async (req, res) => {
+  try {
+    const { tuitions } = getCollections();
+
+    const results = await tuitions
+      .find({
+        tutorEmail: req.user.email,
+      })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      total: results.length,
+      data: results,
+    });
+  } catch (error) {
+    console.error("Get my tuitions error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve your tuitions.",
+    });
+  }
+};
