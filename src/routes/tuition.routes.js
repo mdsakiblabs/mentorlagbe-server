@@ -6,6 +6,7 @@ import {
   createTuition,
   getMyTuitions,
   updateMyTuition,
+  deleteMyTuition,
 } from "../controllers/tuition.controller.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
@@ -23,5 +24,8 @@ router.post("/", verifyToken, verifyTutor, createTuition);
 
 // Update tuition - Tutor only
 router.patch("/:id", verifyToken, verifyTutor, updateMyTuition);
+
+// Delete tuition - Tutor only
+router.delete("/:id", verifyToken, verifyTutor, deleteMyTuition);
 
 export default router;

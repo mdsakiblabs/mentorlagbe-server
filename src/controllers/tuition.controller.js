@@ -433,3 +433,43 @@ export const updateMyTuition = async (req, res) => {
     });
   }
 };
+
+// Delete a tuition created by the logged-in tutor
+export const deleteMyTuition = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid tuition ID.",
+      });
+    }
+
+    const { tuitions } = getCollections();
+
+    const result = await tuitions.deleteOne({
+      _id: new ObjectId(id),
+      tutorEmail: req.user.email,
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Tuition not found or you do not own this tuition.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Tuition deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete tuition error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete tuition.",
+    });
+  }
+};
