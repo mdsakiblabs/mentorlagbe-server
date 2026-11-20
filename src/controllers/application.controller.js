@@ -158,3 +158,76 @@ export const getTutorApplications = async (req, res) => {
     });
   }
 };
+
+// Update application status - Tutor only
+export const updateApplicationStatus = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { status } = req.body;
+
+    // Validate application ID
+    if (!ObjectId.isValid(applicationId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid application ID.",
+      });
+    }
+
+    // Validate status
+    if (!["accepted", "rejected"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be accepted or rejected.",
+      });
+    }
+
+    const { applications } = getCollections();
+
+    // Find application belonging to the logged-in tutor
+    const application = await applications.findOne({
+      _id: new ObjectId(applicationId),
+      tutorEmail: req.user.email,
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found or you do not own this application.",
+      });
+    }
+
+    // Only pending applications can be updated
+    if (application.status !== "pending") {
+      return res.status(409).json({
+        success: false,
+        message: "This application has already been processed.",
+      });
+    }
+
+    await applications.updateOne(
+      {
+        _id: new ObjectId(applicationId),
+        tutorEmail: req.user.email,
+        status: "pending",
+      },
+      {
+        $set: {
+          status,
+          updatedAt: new Date(),
+        },
+      },
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Application ${status} successfully.`,
+    });
+  } catch (error) {
+    console.error("Update application status error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update application status.",
+    });
+  }
+};

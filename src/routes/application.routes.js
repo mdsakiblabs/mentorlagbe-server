@@ -4,6 +4,7 @@ import {
   createApplication,
   getMyApplications,
   getTutorApplications,
+  updateApplicationStatus,
 } from "../controllers/application.controller.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { verifyStudent, verifyTutor } from "../middlewares/verifyRole.js";
@@ -18,6 +19,14 @@ router.get(
   verifyToken,
   verifyTutor,
   getTutorApplications,
+);
+
+// Accept or reject an application - Tutor only
+router.patch(
+  "/:applicationId/status",
+  verifyToken,
+  verifyTutor,
+  updateApplicationStatus,
 );
 
 // Apply for a tuition - Student only
