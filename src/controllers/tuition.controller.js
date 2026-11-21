@@ -22,7 +22,10 @@ export const getAllTuitions = async (req, res) => {
     };
 
     if (search) {
-      filter.title = { $regex: search, $options: "i" };
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { subject: { $regex: search, $options: "i" } },
+      ];
     }
 
     if (subject) {
