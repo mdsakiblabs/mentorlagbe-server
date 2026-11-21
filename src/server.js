@@ -11,6 +11,7 @@ import applicationRoutes from "./routes/application.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import { handleStripeWebhook } from "./controllers/payment.controller.js";
 import { getCollections } from "./config/collections.js";
+import profileRoutes from "./routes/profile.routes.js";
 
 dotenv.config();
 
@@ -57,6 +58,8 @@ const startServer = async () => {
     app.use("/api/admin", adminRoutes);
 
     app.use("/api/payments", paymentRoutes);
+
+    app.use("/api/profile", profileRoutes);
 
     const PORT = process.env.PORT || 5000;
 
