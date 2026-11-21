@@ -6,6 +6,7 @@ import {
   getTutorApplications,
   updateApplicationStatus,
   cancelApplication,
+  getStudentStats,
 } from "../controllers/application.controller.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { verifyStudent, verifyTutor } from "../middlewares/verifyRole.js";
@@ -13,6 +14,8 @@ import { verifyStudent, verifyTutor } from "../middlewares/verifyRole.js";
 const router = express.Router();
 
 router.get("/my-applications", verifyToken, verifyStudent, getMyApplications);
+
+router.get("/my-stats", verifyToken, verifyStudent, getStudentStats);
 
 // Get applications received by the logged-in tutor
 router.get(

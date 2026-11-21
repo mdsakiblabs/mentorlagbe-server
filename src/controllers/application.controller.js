@@ -273,3 +273,63 @@ export const cancelApplication = async (req, res) => {
     });
   }
 };
+
+// Get dashboard statistics for the logged-in student
+export const getStudentStats = async (req, res) => {
+  try {
+    const { users, applications } = getCollections();
+
+    // Find the logged-in student's current plan
+    const student = await users.findOne(
+      {
+        email: req.user.email,
+        role: "student",
+      },
+      {
+        projection: {
+          plan: 1,
+        },
+      },
+    );
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student profile not found.",
+      });
+    }
+
+    // Count only this student's applications
+    const [totalApplied, acceptedApplications, pendingApplications] =
+      await Promise.all([
+        applications.countDocuments({
+          studentEmail: req.user.email,
+        }),
+        applications.countDocuments({
+          studentEmail: req.user.email,
+          status: "accepted",
+        }),
+        applications.countDocuments({
+          studentEmail: req.user.email,
+          status: "pending",
+        }),
+      ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalApplied,
+        acceptedApplications,
+        pendingApplications,
+        currentPlan: student.plan || "free",
+      },
+    });
+  } catch (error) {
+    console.error("Get student stats error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch student dashboard statistics.",
+    });
+  }
+};
