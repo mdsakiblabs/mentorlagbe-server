@@ -102,3 +102,34 @@ export const updateTuitionApproval = async (req, res) => {
     });
   }
 };
+
+// Get all payment records - Admin only
+export const getAllPayments = async (req, res) => {
+  try {
+    const { payments } = getCollections();
+
+    const allPayments = await payments
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    const totalAmount = allPayments.reduce(
+      (total, payment) => total + (payment.amount || 0),
+      0,
+    );
+
+    res.status(200).json({
+      success: true,
+      total: allPayments.length,
+      totalAmount,
+      data: allPayments,
+    });
+  } catch (error) {
+    console.error("Get all payments error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch payment records.",
+    });
+  }
+};

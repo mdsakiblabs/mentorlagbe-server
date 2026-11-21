@@ -8,7 +8,8 @@ import { createAuth } from "./config/auth.js";
 import adminRoutes from "./routes/admin.routes.js";
 import tuitionRoutes from "./routes/tuition.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
-
+import paymentRoutes from "./routes/payment.routes.js";
+import { handleStripeWebhook } from "./controllers/payment.controller.js";
 dotenv.config();
 
 const app = express();
@@ -33,6 +34,11 @@ const startServer = async () => {
 
     app.use("/api/upload-image", imageUploadRoutes);
 
+    app.post(
+      "/api/payments/webhook",
+      express.raw({ type: "application/json" }),
+      handleStripeWebhook,
+    );
     // Body parser for API routes
     app.use(express.json());
 
@@ -43,6 +49,8 @@ const startServer = async () => {
     app.use("/api/applications", applicationRoutes);
 
     app.use("/api/admin", adminRoutes);
+
+    app.use("/api/payments", paymentRoutes);
 
     const PORT = process.env.PORT || 5000;
 
