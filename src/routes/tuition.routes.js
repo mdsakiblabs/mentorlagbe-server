@@ -7,6 +7,7 @@ import {
   getMyTuitions,
   updateMyTuition,
   deleteMyTuition,
+  updateTuitionStatus,
 } from "../controllers/tuition.controller.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
@@ -21,6 +22,9 @@ router.get("/:id", getTuitionById);
 
 // Protected route - Tutor only
 router.post("/", verifyToken, verifyTutor, createTuition);
+
+// Activate or close a tuition - Tutor only
+router.patch("/:id/status", verifyToken, verifyTutor, updateTuitionStatus);
 
 // Update tuition - Tutor only
 router.patch("/:id", verifyToken, verifyTutor, updateMyTuition);
