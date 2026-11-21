@@ -5,6 +5,7 @@ import {
   getMyApplications,
   getTutorApplications,
   updateApplicationStatus,
+  cancelApplication,
 } from "../controllers/application.controller.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { verifyStudent, verifyTutor } from "../middlewares/verifyRole.js";
@@ -20,6 +21,9 @@ router.get(
   verifyTutor,
   getTutorApplications,
 );
+
+// Cancel a pending application - Student only
+router.delete("/:applicationId", verifyToken, verifyStudent, cancelApplication);
 
 // Accept or reject an application - Tutor only
 router.patch(

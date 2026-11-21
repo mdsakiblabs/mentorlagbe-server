@@ -231,3 +231,45 @@ export const updateApplicationStatus = async (req, res) => {
     });
   }
 };
+
+// Cancel a pending application - Student only
+export const cancelApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    if (!ObjectId.isValid(applicationId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid application ID.",
+      });
+    }
+
+    const { applications } = getCollections();
+
+    const result = await applications.deleteOne({
+      _id: new ObjectId(applicationId),
+      studentEmail: req.user.email,
+      status: "pending",
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Pending application not found or you do not own this application.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Application cancelled successfully.",
+    });
+  } catch (error) {
+    console.error("Cancel application error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to cancel application.",
+    });
+  }
+};
