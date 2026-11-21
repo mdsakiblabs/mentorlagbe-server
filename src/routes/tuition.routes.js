@@ -8,6 +8,7 @@ import {
   updateMyTuition,
   deleteMyTuition,
   updateTuitionStatus,
+  getTutorStats,
 } from "../controllers/tuition.controller.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
@@ -18,6 +19,8 @@ const router = express.Router();
 // Public routes
 router.get("/", getAllTuitions);
 router.get("/my-tuitions", verifyToken, verifyTutor, getMyTuitions);
+// Tutor dashboard statistics - Tutor only
+router.get("/my-stats", verifyToken, verifyTutor, getTutorStats);
 router.get("/:id", getTuitionById);
 
 // Protected route - Tutor only

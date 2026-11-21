@@ -532,3 +532,62 @@ export const updateTuitionStatus = async (req, res) => {
     });
   }
 };
+
+// Get dashboard statistics for the logged-in tutor
+export const getTutorStats = async (req, res) => {
+  try {
+    const { users, tuitions, applications } = getCollections();
+
+    // Find the logged-in tutor's current plan
+    const tutor = await users.findOne(
+      {
+        email: req.user.email,
+        role: "tutor",
+      },
+      {
+        projection: {
+          plan: 1,
+        },
+      },
+    );
+
+    if (!tutor) {
+      return res.status(404).json({
+        success: false,
+        message: "Tutor profile not found.",
+      });
+    }
+
+    // Count only this tutor's tuition posts and applications
+    const [totalPosts, activePosts, totalApplicants] = await Promise.all([
+      tuitions.countDocuments({
+        tutorEmail: req.user.email,
+      }),
+      tuitions.countDocuments({
+        tutorEmail: req.user.email,
+        approvalStatus: "approved",
+        isActive: true,
+      }),
+      applications.countDocuments({
+        tutorEmail: req.user.email,
+      }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalPosts,
+        activePosts,
+        totalApplicants,
+        currentPlan: tutor.plan || "free",
+      },
+    });
+  } catch (error) {
+    console.error("Get tutor stats error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch tutor dashboard statistics.",
+    });
+  }
+};
