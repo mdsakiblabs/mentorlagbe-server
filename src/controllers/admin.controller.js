@@ -133,3 +133,122 @@ export const getAllPayments = async (req, res) => {
     });
   }
 };
+
+// Get all users - Admin only
+export const getAllUsers = async (req, res) => {
+  try {
+    const { users } = getCollections();
+
+    const allUsers = await users
+      .find(
+        {},
+        {
+          projection: {
+            name: 1,
+            email: 1,
+            role: 1,
+            plan: 1,
+            phone: 1,
+            bio: 1,
+            image: 1,
+            createdAt: 1,
+          },
+        },
+      )
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      total: allUsers.length,
+      data: allUsers,
+    });
+  } catch (error) {
+    console.error("Get all users error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch users.",
+    });
+  }
+};
+
+// Update user role - Admin only
+export const updateUserRole = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+
+    if (!ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID.",
+      });
+    }
+
+    if (!["student", "tutor"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Role must be student or tutor.",
+      });
+    }
+
+    if (req.user.id === userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot change your own role.",
+      });
+    }
+
+    const { users } = getCollections();
+    const targetUser = await users.findOne({
+      _id: new ObjectId(userId),
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    if (targetUser.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin role cannot be changed.",
+      });
+    }
+
+    const result = await users.updateOne(
+      {
+        _id: new ObjectId(userId),
+        role: { $in: ["student", "tutor"] },
+      },
+      {
+        $set: {
+          role,
+          updatedAt: new Date(),
+        },
+      },
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "User role could not be updated.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `User role updated to ${role} successfully.`,
+    });
+  } catch (error) {
+    console.error("Update user role error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update user role.",
+    });
+  }
+};

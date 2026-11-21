@@ -1,11 +1,9 @@
-
 import { createRemoteJWKSet, jwtVerify } from "jose";
-
+import { ObjectId } from "mongodb";
+import { getCollections } from "../config/collections.js";
 const authURL = process.env.BETTER_AUTH_URL;
 
-const JWKS = createRemoteJWKSet(
-  new URL(`${authURL}/api/auth/jwks`)
-);
+const JWKS = createRemoteJWKSet(new URL(`${authURL}/api/auth/jwks`));
 
 export const verifyToken = async (req, res, next) => {
   try {
@@ -33,6 +31,25 @@ export const verifyToken = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: "Unauthorized: Invalid token payload.",
+      });
+    }
+
+    const { users } = getCollections();
+
+    const currentUser = await users.findOne(
+      { _id: new ObjectId(payload.id) },
+      { projection: { email: 1, role: 1 } },
+    );
+
+    if (
+      !currentUser ||
+      currentUser.email !== payload.email ||
+      currentUser.role !== payload.role
+    ) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Unauthorized: User information has changed. Please login again.",
       });
     }
 
