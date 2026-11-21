@@ -5,7 +5,7 @@ import { toNodeHandler } from "better-auth/node";
 import imageUploadRoutes from "./routes/imageUpload.routes.js";
 import { connectDB } from "./config/db.js";
 import { createAuth } from "./config/auth.js";
-
+import adminRoutes from "./routes/admin.routes.js";
 import tuitionRoutes from "./routes/tuition.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
 
@@ -41,6 +41,8 @@ const startServer = async () => {
 
     // Application routes
     app.use("/api/applications", applicationRoutes);
+
+    app.use("/api/admin", adminRoutes);
 
     const PORT = process.env.PORT || 5000;
 
