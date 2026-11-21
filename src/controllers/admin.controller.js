@@ -252,3 +252,60 @@ export const updateUserRole = async (req, res) => {
     });
   }
 };
+
+// Get admin dashboard statistics - Admin only
+export const getAdminStats = async (req, res) => {
+  try {
+    const { users, tuitions, payments } = getCollections();
+
+    const [
+      totalUsers,
+      totalTutors,
+      pendingTuitions,
+      approvedTuitions,
+      revenueResult,
+    ] = await Promise.all([
+      users.countDocuments(),
+      users.countDocuments({ role: "tutor" }),
+      tuitions.countDocuments({ approvalStatus: "pending" }),
+      tuitions.countDocuments({ approvalStatus: "approved" }),
+      payments
+        .aggregate([
+          {
+            $match: {
+              status: "paid",
+              currency: "usd",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalRevenue: { $sum: "$amount" },
+            },
+          },
+        ])
+        .toArray(),
+    ]);
+
+    const totalRevenue = revenueResult[0]?.totalRevenue || 0;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        totalTutors,
+        pendingTuitions,
+        approvedTuitions,
+        totalRevenue,
+        currency: "usd",
+      },
+    });
+  } catch (error) {
+    console.error("Get admin stats error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch admin dashboard statistics.",
+    });
+  }
+};

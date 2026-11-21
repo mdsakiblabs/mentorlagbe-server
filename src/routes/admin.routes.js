@@ -6,6 +6,7 @@ import {
   getAllPayments,
   getAllUsers,
   updateUserRole,
+  getAdminStats,
 } from "../controllers/admin.controller.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { verifyAdmin } from "../middlewares/verifyRole.js";
@@ -19,6 +20,8 @@ router.get("/payments", verifyToken, verifyAdmin, getAllPayments);
 
 // Get all users - Admin only
 router.get("/users", verifyToken, verifyAdmin, getAllUsers);
+
+router.get("/stats", verifyToken, verifyAdmin, getAdminStats);
 
 // Approve or reject a tuition - Admin only
 router.patch(
