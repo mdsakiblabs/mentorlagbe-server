@@ -10,6 +10,8 @@ import tuitionRoutes from "./routes/tuition.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import { handleStripeWebhook } from "./controllers/payment.controller.js";
+import { getCollections } from "./config/collections.js";
+
 dotenv.config();
 
 const app = express();
@@ -26,6 +28,10 @@ app.get("/", (req, res) => {
 const startServer = async () => {
   try {
     await connectDB();
+
+    const { payments } = getCollections();
+
+    await payments.createIndex({ sessionId: 1 }, { unique: true });
 
     const auth = createAuth();
 

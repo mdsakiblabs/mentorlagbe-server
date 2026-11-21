@@ -1,9 +1,28 @@
 import { getStripe } from "../config/stripe.js";
 import { getCollections } from "../config/collections.js";
+import { ObjectId } from "mongodb";
 // Create Stripe Checkout Session
 export const createCheckoutSession = async (req, res) => {
   try {
     const { role, email, id } = req.user;
+
+    const { users } = getCollections();
+
+    const currentUser = await users.findOne({ email });
+
+    if (!currentUser || currentUser.role !== role) {
+      return res.status(404).json({
+        success: false,
+        message: "User account not found.",
+      });
+    }
+
+    if (currentUser.plan === "pro") {
+      return res.status(409).json({
+        success: false,
+        message: "You are already on the Pro plan.",
+      });
+    }
 
     if (!["student", "tutor"].includes(role)) {
       return res.status(403).json({
@@ -86,6 +105,10 @@ export const handleStripeWebhook = async (req, res) => {
 
       const { userId, userEmail, role, plan } = session.metadata;
 
+      if (session.client_reference_id !== userId) {
+        return res.status(400).send("Payment user verification failed.");
+      }
+
       if (
         !userId ||
         !userEmail ||
@@ -95,7 +118,31 @@ export const handleStripeWebhook = async (req, res) => {
         return res.status(400).send("Invalid payment metadata.");
       }
 
+      const expectedAmount = role === "student" ? 1000 : 1500;
+
+      if (
+        session.amount_total !== expectedAmount ||
+        session.currency !== "usd"
+      ) {
+        return res.status(400).send("Invalid payment amount or currency.");
+      }
+
       const { users, payments } = getCollections();
+
+      if (!ObjectId.isValid(userId)) {
+        return res.status(400).send("Invalid payment user ID.");
+      }
+
+      const currentUser = await users.findOne({
+        _id: new ObjectId(userId),
+        email: userEmail,
+        role,
+      });
+
+      if (!currentUser) {
+        return res.status(404).send("Payment user not found.");
+      }
+
 
       await payments.updateOne(
         { sessionId: session.id },
