@@ -143,21 +143,20 @@ export const handleStripeWebhook = async (req, res) => {
         return res.status(404).send("Payment user not found.");
       }
 
-
       await payments.updateOne(
-        { sessionId: session.id },
+        { stripeSessionId: session.id },
         {
           $setOnInsert: {
-            sessionId: session.id,
-            paymentIntent: session.payment_intent,
-            userId,
             userEmail,
-            role,
-            plan,
+            userName: currentUser.name,
+            userRole: role,
+            planName: plan,
             amount: session.amount_total,
             currency: session.currency,
-            status: "paid",
-            createdAt: new Date(),
+            transactionId: session.payment_intent,
+            stripeSessionId: session.id,
+            paymentStatus: "paid",
+            paidAt: new Date(),
           },
         },
         { upsert: true },

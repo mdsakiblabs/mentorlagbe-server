@@ -33,7 +33,24 @@ const startServer = async () => {
 
     const { payments } = getCollections();
 
-    await payments.createIndex({ sessionId: 1 }, { unique: true });
+    const paymentIndexes = await payments.indexes();
+    const oldPaymentIndex = paymentIndexes.find(
+      (index) => index.name === "sessionId_1",
+    );
+
+    if (oldPaymentIndex) {
+      await payments.dropIndex("sessionId_1");
+    }
+
+    await payments.createIndex(
+      { stripeSessionId: 1 },
+      {
+        unique: true,
+        partialFilterExpression: {
+          stripeSessionId: { $type: "string" },
+        },
+      },
+    );
 
     const { applications } = getCollections();
 

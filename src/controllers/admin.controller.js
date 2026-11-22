@@ -108,15 +108,11 @@ export const getAllPayments = async (req, res) => {
   try {
     const { payments } = getCollections();
 
-    const allPayments = await payments
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
+    const allPayments = await payments.find({}).sort({ paidAt: -1 }).toArray();
 
-    const totalAmount = allPayments.reduce(
-      (total, payment) => total + (payment.amount || 0),
-      0,
-    );
+    const totalAmount = allPayments
+      .filter((payment) => payment.paymentStatus === "paid")
+      .reduce((total, payment) => total + (payment.amount || 0), 0);
 
     res.status(200).json({
       success: true,
@@ -267,7 +263,7 @@ export const getAdminStats = async (req, res) => {
         .aggregate([
           {
             $match: {
-              status: "paid",
+              paymentStatus: "paid",
               currency: "usd",
             },
           },
