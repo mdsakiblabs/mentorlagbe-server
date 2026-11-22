@@ -1,5 +1,5 @@
 import { uploadImageToImgBB } from "../services/imageUpload.service.js";
-
+import { fileTypeFromBuffer } from "file-type";
 // Upload image
 export const uploadImage = async (req, res) => {
   try {
@@ -10,7 +10,18 @@ export const uploadImage = async (req, res) => {
       });
     }
 
-    const imageUrl = await uploadImageToImgBB(req.file.buffer);
+    const fileType = await fileTypeFromBuffer(req.file.buffer);
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (!fileType || !allowedTypes.includes(fileType.mime)) {
+      return res.status(400).json({
+        success: false,
+        message: "Only valid JPEG, PNG, and WebP images are allowed.",
+      });
+    }
+
+    const imageUrl = await uploadImageToImgBB(req.file.buffer, fileType.ext);
 
     res.status(200).json({
       success: true,

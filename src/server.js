@@ -12,6 +12,7 @@ import paymentRoutes from "./routes/payment.routes.js";
 import { handleStripeWebhook } from "./controllers/payment.controller.js";
 import { getCollections } from "./config/collections.js";
 import profileRoutes from "./routes/profile.routes.js";
+import multer from "multer";
 
 dotenv.config();
 
@@ -67,6 +68,37 @@ const startServer = async () => {
     app.use("/api/payments", paymentRoutes);
 
     app.use("/api/profile", profileRoutes);
+
+    // Global error handler
+    app.use((error, req, res, next) => {
+      if (error instanceof multer.MulterError) {
+        if (error.code === "LIMIT_FILE_SIZE") {
+          return res.status(413).json({
+            success: false,
+            message: "Image size must not exceed 5 MB.",
+          });
+        }
+
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      if (error.message === "Only image files are allowed.") {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      console.error("Unhandled server error:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "Internal server error.",
+      });
+    });
 
     const PORT = process.env.PORT || 5000;
 
