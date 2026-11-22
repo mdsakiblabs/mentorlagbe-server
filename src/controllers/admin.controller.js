@@ -186,10 +186,10 @@ export const updateUserRole = async (req, res) => {
       });
     }
 
-    if (!["student", "tutor"].includes(role)) {
+    if (!["student", "tutor", "admin"].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: "Role must be student or tutor.",
+        message: "Role must be student, tutor, or admin.",
       });
     }
 
@@ -201,6 +201,7 @@ export const updateUserRole = async (req, res) => {
     }
 
     const { users } = getCollections();
+
     const targetUser = await users.findOne({
       _id: new ObjectId(userId),
     });
@@ -212,17 +213,10 @@ export const updateUserRole = async (req, res) => {
       });
     }
 
-    if (targetUser.role === "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Admin role cannot be changed.",
-      });
-    }
-
     const result = await users.updateOne(
       {
         _id: new ObjectId(userId),
-        role: { $in: ["student", "tutor"] },
+        role: { $in: ["student", "tutor", "admin"] },
       },
       {
         $set: {
