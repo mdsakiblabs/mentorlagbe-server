@@ -34,6 +34,13 @@ const startServer = async () => {
 
     await payments.createIndex({ sessionId: 1 }, { unique: true });
 
+    const { applications } = getCollections();
+
+    await applications.createIndex(
+      { tuitionId: 1, studentEmail: 1 },
+      { unique: true },
+    );
+
     const auth = createAuth();
 
     // Better Auth handler (Express 5)

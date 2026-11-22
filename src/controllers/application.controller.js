@@ -5,7 +5,20 @@ import { getCollections } from "../config/collections.js";
 export const createApplication = async (req, res) => {
   try {
     const { tuitionId } = req.params;
-    const { preferredSchedule, studentNote } = req.body;
+    const { studentPhone, preferredSchedule, studentNote } = req.body;
+
+    // Validate student phone
+    if (
+      !studentPhone ||
+      typeof studentPhone !== "string" ||
+      !studentPhone.trim() ||
+      studentPhone.trim().length > 20
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid student phone number is required.",
+      });
+    }
 
     // Validate tuition ID
     if (!ObjectId.isValid(tuitionId)) {
@@ -56,6 +69,14 @@ export const createApplication = async (req, res) => {
       });
     }
 
+    // Prevent applying to own tuition
+    if (tuition.tutorEmail === student.email) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot apply to your own tuition.",
+      });
+    }
+
     // Prevent duplicate applications
     const existingApplication = await applications.findOne({
       tuitionId: new ObjectId(tuitionId),
@@ -78,7 +99,7 @@ export const createApplication = async (req, res) => {
       tutorEmail: tuition.tutorEmail,
       studentName: student.name,
       studentEmail: student.email,
-      studentPhone: student.phone || "",
+      studentPhone: studentPhone.trim(),
       preferredSchedule: preferredSchedule.trim(),
       studentNote: typeof studentNote === "string" ? studentNote.trim() : "",
       status: "pending",
@@ -97,6 +118,13 @@ export const createApplication = async (req, res) => {
     });
   } catch (error) {
     console.error("Create application error:", error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "You have already applied for this tuition.",
+      });
+    }
 
     res.status(500).json({
       success: false,
@@ -204,7 +232,7 @@ export const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    await applications.updateOne(
+    const result = await applications.updateOne(
       {
         _id: new ObjectId(applicationId),
         tutorEmail: req.user.email,
@@ -217,6 +245,14 @@ export const updateApplicationStatus = async (req, res) => {
         },
       },
     );
+
+    // Check whether the application was actually updated
+    if (result.modifiedCount === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "This application has already been processed.",
+      });
+    }
 
     res.status(200).json({
       success: true,
