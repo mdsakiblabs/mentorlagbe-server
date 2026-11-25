@@ -32,13 +32,12 @@ export const createCheckoutSession = async (req, res) => {
     }
 
     const amount = role === "student" ? 1000 : 1500;
-    const clientURL = process.env.CLIENT_URL || "http://localhost:3000";
+    const clientURL = process.env.CLIENT_URL || "http://localhost:5000";
 
     const stripe = getStripe();
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"],
       customer_email: email,
       client_reference_id: id,
       metadata: {
